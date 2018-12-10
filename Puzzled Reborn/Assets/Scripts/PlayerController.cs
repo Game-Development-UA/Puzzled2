@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour {
 	public GameObject[] tetrominos;
 
 	RaycastHit hit;
-	Tetromino activePiece;
+	GameObject activePiece;
 
 	// Use this for initialization
 	void Start () {
@@ -32,7 +32,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	GameObject Spawn() {
-		
+		return null;
 	}
 
 	void CheckScore() {
