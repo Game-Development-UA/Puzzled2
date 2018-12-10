@@ -69,13 +69,16 @@ public class PlayerController : MonoBehaviour {
 						if(insideBorder(currentPosition)) {
 							newPositions[i] = currentPosition;
 						} else {
-							return;
+							newPositions[i] = new Vector3(10f, 10f, 10f);
 						}
 					}
-					ogClickPosition = roundVector3(ogClickPosition + offset);
 
-					// If all 4 were valid positions, move to it.
-					activeScript.MoveToNewPosition(newPositions);
+					if(ValidPositions(newPositions)) {
+						ogClickPosition = roundVector3(ogClickPosition + offset);
+
+						// If all 4 were valid positions, move to it.
+						activeScript.MoveToNewPosition(newPositions);
+					}
 				}
 				
 			}
@@ -97,23 +100,31 @@ public class PlayerController : MonoBehaviour {
 					// Rotate X
 					if (Vector3.right == hit.normal) {
 						Debug.Log("Rotate X");
-						activeScript.Rotate(Vector3.right);
+						Rotate(Vector3.right);
 					}
 					// Rotate Y
 					else if (Vector3.up == hit.normal) {
 						Debug.Log("Rotate Y");
-						activeScript.Rotate(Vector3.up);
+						Rotate(Vector3.up);
 					}
 					// Rotate Z
 					else if (Vector3.back == hit.normal) {
 						Debug.Log("Rotate Z");
-						activeScript.Rotate(Vector3.back);
+						Rotate(Vector3.back);
 					}
 
 				}
 			}
 			// Store time to differentiate long clicks.
 		}
+	}
+
+	Vector3 roundVector3(Vector3 input) {
+		return new Vector3(
+			Mathf.Round(input.x),
+			Mathf.Round(input.y),
+			Mathf.Round(input.z)
+		);
 	}
 
 	bool insideBorder(Vector3 pos) {
@@ -123,12 +134,46 @@ public class PlayerController : MonoBehaviour {
 			pos.y >= 0);
 	}
 
-	Vector3 roundVector3(Vector3 input) {
-		return new Vector3(
-			Mathf.Round(input.x),
-			Mathf.Round(input.y),
-			Mathf.Round(input.z)
-		);
+	void Rotate(Vector3 pos) {
+		activeScript.SetDefault();
+
+		Vector3 pivot = activeScript.cubes[0].position;
+		for (int i = 0; i < 4; i++) {
+			activeScript.cubes[i].RotateAround(pivot, pos, 90);
+		}
+
+		if(!ValidPositions(activeScript.cubes)) {
+			// Revert Changes
+			for (int i = 0; i < 4; i++) {
+				activeScript.cubes[i].RotateAround(pivot, pos, -90);
+			}
+		}
+
+		// Update colors
+		activeScript.SetHighlight();
+		activeScript.SetActiveColor(activeColor);
+	}
+
+	bool ValidPositions(Transform[] positions) {
+		for(int i = 0; i < positions.Length; i++) {
+			if (!insideBorder(positions[i].position)) {
+				return false;
+			}
+
+			// TODO: Check if there is not a cube in the way.
+		}
+		return true;
+	}
+
+	bool ValidPositions(Vector3[] positions) {
+		for(int i = 0; i < positions.Length; i++) {
+			if (!insideBorder(positions[i])) {
+				return false;
+			}
+
+			// TODO: Check if there is not a cube in the way.
+		}
+		return true;
 	}
 
 	void SpawnTetromino() {

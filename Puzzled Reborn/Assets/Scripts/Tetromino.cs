@@ -66,24 +66,13 @@ public class Tetromino : MonoBehaviour {
 	}
 
 	public void MoveToNewPosition(Vector3[] newPositions) {
-		// Get highlight location from the SetHighlight function.
-		SetDefaultColor(defaultColor);
+		// Undo highlight
+		SetDefault();
+		// Assumed that the move is valid
 		for(int i=0; i < 4; i++) {
 			// Move shape to a new position
 			cubes[i].position = newPositions[i];
 		}
-
-		SetHighlight();
-	}
-
-	public void Rotate(Vector3 pos) {
-		SetDefault();
-
-		Vector3 pivot = cubes[0].position;
-		for (int i = 0; i < 4; i++) {
-			cubes[i].RotateAround(pivot, pos, 90);
-		}
-
 		SetHighlight();
 		SetActiveColor(activeColor);
 	}
