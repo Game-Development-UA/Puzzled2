@@ -12,10 +12,11 @@ public class PlayerController : MonoBehaviour {
 
 	RaycastHit hit;
 	GameObject activePiece;
+	Tetromino activeScript;
 
 	// Use this for initialization
 	void Start () {
-		activePiece = Spawn();
+		SpawnTetromino();
 	}
 
 	// Update is called once per frame
@@ -31,8 +32,15 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
-	GameObject Spawn() {
-		return null;
+	void SpawnTetromino() {
+		// Instantiate one of the six possible tetrominos.
+		activePiece = Instantiate(tetrominos[Random.Range(0, 6)]);
+		// Set active color.
+		activePiece.GetComponent<Renderer>().material.color = activeColor;
+
+		activeScript = activePiece.GetComponent<Tetromino>();
+		// Set highlight color for projected destination.
+		activeScript.SetHighlightColor(highlightColor);
 	}
 
 	void CheckScore() {
