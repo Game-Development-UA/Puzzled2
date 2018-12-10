@@ -6,11 +6,16 @@ public class Tetromino : MonoBehaviour {
 
 	public Transform[] cubes;
 	public float reach = 100f;
-	public Color activeColor;
+
+	Color[] originalColors = new Color[4];
+	Color activeColor;
 	RaycastHit hit;
 
-	// Update is called once per frame
-	void Update () {
+	void SetActiveColor(Color color) {
+		activeColor = color;
+	}
+
+	void SetHiglight() {
 		// Highlight projected drop location.
 		for(int i=0; i < 4; i++) {
 			// Get position of current cubes bottom face.
@@ -22,12 +27,31 @@ public class Tetromino : MonoBehaviour {
 
 			if(Physics.Raycast(pos, Vector3.down, out hit, reach)) {
 				GameObject target = hit.collider.gameObject;
+				originalColors[i] = target.GetComponent<Renderer>().material.color;
 				target.GetComponent<Renderer>().material.color = activeColor;
 			}
 		}
 	}
 
-	public void CleanUp() {
-		;
+	void MoveToNewPosition(Vector3[] newPositions) {
+		// Get highlight location from the SetHighlight function.
+		for(int i=0; i < 4; i++) {
+			// Get position of current cubes bottom face.
+			Vector3 pos = new Vector3(
+				cubes[i].position.x,
+				cubes[i].position.y - 0.5f,
+				cubes[i].position.z
+				);
+
+			// Change material to it's original color.
+			if(Physics.Raycast(pos, Vector3.down, out hit, reach)) {
+				GameObject target = hit.collider.gameObject;
+				target.GetComponent<Renderer>().material.color = originalColors[i];
+			}
+
+			// Move shape to a new position
+			cubes[i].position = newPositions[i];
+		}
 	}
+
 }
