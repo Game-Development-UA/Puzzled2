@@ -8,21 +8,22 @@ public class Tetromino : MonoBehaviour {
 	public float reach = 100f;
 
 	Color[] originalColors = new Color[4];
-	Color highlightColor;
+	Color highlightColor, activeColor;
 	RaycastHit hit;
+
 
 	public void SetHighlightColor(Color color) {
 		highlightColor = color;
 	}
 
 	public void SetActiveColor(Color color) {
+		activeColor = color;
 		for(int i=0; i < 4; i++) { 
-			Debug.Log(cubes[i].gameObject.GetComponent<Renderer>());
 			cubes[i].gameObject.GetComponent<Renderer>().material.color = color;
 		}
 	}
 
-	public void SetHiglight() {
+	public void SetHighlight() {
 		// Highlight projected drop location.
 		for(int i=0; i < 4; i++) {
 			// Get position of current cubes bottom face.
@@ -34,8 +35,11 @@ public class Tetromino : MonoBehaviour {
 
 			if(Physics.Raycast(pos, Vector3.down, out hit, reach)) {
 				GameObject target = hit.collider.gameObject;
-				originalColors[i] = target.GetComponent<Renderer>().material.color;
-				target.GetComponent<Renderer>().material.color = highlightColor;
+				Renderer renderer = target.GetComponent<Renderer>();
+				if (renderer.material.color != activeColor) {
+					originalColors[i] =  renderer.material.color;
+					renderer.material.color = highlightColor;
+				}
 			}
 		}
 	}
