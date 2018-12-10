@@ -45,8 +45,11 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void SpawnTetromino() {
+		// TODO: Check if gameOver before Instantiation.
+
 		// Instantiate one of the six possible tetrominos.
 		activePiece = Instantiate(tetrominos[Random.Range(0, 6)]);
+		activePiece.transform.position = spawnLocation;
 
 		// Get Tetromino Object.
 		activeScript = activePiece.GetComponent<Tetromino>();
