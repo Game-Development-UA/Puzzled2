@@ -16,6 +16,8 @@ public class PlayerController : MonoBehaviour {
 	public float longPressDelay = 0.2f;
 	public float swipeTime = 0.4f;
 
+	int score = 0;
+
 	RaycastHit hit;
 	GameObject activePiece;
 	GameObject currentSelection;
@@ -44,6 +46,7 @@ public class PlayerController : MonoBehaviour {
 	void Update () {
 		activeScript.SetHighlight();
 		if ( Time.time - dropTime > 1 || Input.GetKeyDown("space")) {
+			CheckScore();
 			dropTime = Time.time;
 
 			// Decrease by one
@@ -92,7 +95,6 @@ public class PlayerController : MonoBehaviour {
 
 				}
 			}
-			// Store time to differentiate long clicks.
 		}
 		// If left click longer than longPressDelay.
 		if ( Input.GetButton("Fire1") && Time.time - startTime > longPressDelay ) {
@@ -100,9 +102,11 @@ public class PlayerController : MonoBehaviour {
 			Vector3 ogClickPosition = currentSelection.transform.position;
 			// Get renderer to check for highlight
 			Renderer renderer = currentSelection.GetComponent<Renderer>();
-			if (renderer.material.color == highlightColor) {
+			if (renderer.material.color == highlightColor || renderer.material.color == activeColor) {
 				// Store new 
 				Vector3[] newPositions = new Vector3[4];
+
+				// TODO: Refactor for Vector3 eventually
 
 				// Cast ray from the camera to mouse poisiton.
 				Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -110,7 +114,8 @@ public class PlayerController : MonoBehaviour {
 				if ( Physics.Raycast(ray, out hit, 100.0f) ) {
 					// Get selected area of the playable area
 					Vector3 selectedLocation = hit.collider.gameObject.transform.position;
-
+					selectedLocation.y = 0;
+					ogClickPosition.y = 0;
 					Vector3 offset = selectedLocation - ogClickPosition;
 
 					// Check cube location
@@ -231,10 +236,53 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void CheckScore() {
-		for(int y = 0; y < 11; y++) {
-			for(int x = -2; x < 3; x++) {
-				for(int z = -2; z < 3; z++) {
-					
+		// Check first 10 plus 11th for gameover
+		for(int y = 0; y < 12; y++) {
+			if(CheckPlane(y)) {
+				score += 25;
+				y--;
+			}
+		}
+	}
+
+	bool CheckPlane(int y) {
+		int cubesInPlane = 0;
+		for(int x = -2; x < 3; x++) {
+			for(int z = -2; z < 3; z++) {
+				if(!CheckDestination(new Vector3(x, y, z))) {
+					cubesInPlane++;
+				}
+			}
+		}
+		if(cubesInPlane == 25) {
+			DeletePlane(y);
+			// Decrease by one to recount level after pieces drop a unit.
+			Debug.Log("Plane Complete!");
+			return true;
+		}
+		return false;
+	}
+
+	void DeletePlane(int y) {
+		// Delete cubes in plane.
+		GameObject[] objects = GameObject.FindGameObjectsWithTag("Tetromino");
+		for(int i = 0; i < objects.Length; i++) {
+			if(objects[i].GetComponent<Renderer>().material.color != activeColor){
+				if(objects[i].transform.position.y == y) {
+					objects[i].SetActive(false);
+				}
+			}
+		}
+
+		DecreaseAbove(y);
+	}
+
+	void DecreaseAbove(int y) {
+		GameObject[] objects = GameObject.FindGameObjectsWithTag("Tetromino");
+		for(int i = 0; i < objects.Length; i++) {
+			if(objects[i].GetComponent<Renderer>().material.color != activeColor){
+				if(objects[i].transform.position.y > y) {
+					objects[i].transform.position -= Vector3.up;
 				}
 			}
 		}
