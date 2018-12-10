@@ -15,6 +15,13 @@ public class Tetromino : MonoBehaviour {
 		highlightColor = color;
 	}
 
+	public void SetActiveColor(Color color) {
+		for(int i=0; i < 4; i++) { 
+			Debug.Log(cubes[i].gameObject.GetComponent<Renderer>());
+			cubes[i].gameObject.GetComponent<Renderer>().material.color = color;
+		}
+	}
+
 	public void SetHiglight() {
 		// Highlight projected drop location.
 		for(int i=0; i < 4; i++) {
