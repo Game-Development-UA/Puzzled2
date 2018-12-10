@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour {
 	Tetromino activeScript;
 
 	// Track long click
-	float startTime;
+	float startTime, dropTime;
 
 
 	// Use this for initialization
@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour {
 		highlightColor.a = 1f;
 		defaultColor.a = 1f;
 
+		dropTime = Time.time;
 		// Instantiate the first piece
 		SpawnTetromino();
 	}
@@ -42,9 +43,59 @@ public class PlayerController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		activeScript.SetHighlight();
+		if ( Time.time - dropTime > 1 || Input.GetKeyDown("space")) {
+			dropTime = Time.time;
 
+			// Decrease by one
+			Vector3[] locs = new Vector3[4];
+			for(int i = 0; i < 4; i++ ){
+				locs[i] = activeScript.cubes[i].position - Vector3.up;
+			}
+
+			if(ValidPositions(locs)) {
+				activeScript.MoveToNewPosition(locs);
+			} else {
+				activeScript.SetDefault();
+				activeScript.SetActiveColor(defaultColor);
+				SpawnTetromino();
+			}
+		}
+		// If mouse clicked.
+		if ( Input.GetButtonDown("Fire1") ) {
+			startTime = Time.time;
+
+			// Cast ray from the camera to mouse poisiton.
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+			// Check the collision.
+			if ( Physics.Raycast(ray, out hit, 100.0f) ) {
+				currentSelection = hit.collider.gameObject;
+
+				// RotationUI Logic
+				if(currentSelection.GetComponent<Renderer>().material.name == "Default_Prototype (Instance)") {
+					startTime += swipeTime;
+					// Rotate X
+					if (Vector3.right == hit.normal) {
+						Debug.Log("Rotate X");
+						Rotate(Vector3.right);
+					}
+					// Rotate Y
+					else if (Vector3.up == hit.normal) {
+						Debug.Log("Rotate Y");
+						Rotate(Vector3.up);
+					}
+					// Rotate Z
+					else if (Vector3.back == hit.normal) {
+						Debug.Log("Rotate Z");
+						Rotate(Vector3.back);
+					}
+
+				}
+			}
+			// Store time to differentiate long clicks.
+		}
 		// If left click longer than longPressDelay.
-		if ( Input.GetButton("Fire1") && Time.time - startTime > longPressDelay  && Time.time - startTime < swipeTime) {
+		if ( Input.GetButton("Fire1") && Time.time - startTime > longPressDelay ) {
 			// Keep original selection position
 			Vector3 ogClickPosition = currentSelection.transform.position;
 			// Get renderer to check for highlight
@@ -83,40 +134,7 @@ public class PlayerController : MonoBehaviour {
 				
 			}
 		}
-		// If mouse clicked.
-		else if ( Input.GetButtonDown("Fire1") ) {
-			startTime = Time.time;
-
-			// Cast ray from the camera to mouse poisiton.
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-			// Check the collision.
-			if ( Physics.Raycast(ray, out hit, 100.0f) ) {
-				currentSelection = hit.collider.gameObject;
-
-				// RotationUI Logic
-				if(currentSelection.GetComponent<Renderer>().material.name == "Default_Prototype (Instance)") {
-					startTime += swipeTime;
-					// Rotate X
-					if (Vector3.right == hit.normal) {
-						Debug.Log("Rotate X");
-						Rotate(Vector3.right);
-					}
-					// Rotate Y
-					else if (Vector3.up == hit.normal) {
-						Debug.Log("Rotate Y");
-						Rotate(Vector3.up);
-					}
-					// Rotate Z
-					else if (Vector3.back == hit.normal) {
-						Debug.Log("Rotate Z");
-						Rotate(Vector3.back);
-					}
-
-				}
-			}
-			// Store time to differentiate long clicks.
-		}
+		
 	}
 
 	Vector3 roundVector3(Vector3 input) {
@@ -125,13 +143,6 @@ public class PlayerController : MonoBehaviour {
 			Mathf.Round(input.y),
 			Mathf.Round(input.z)
 		);
-	}
-
-	bool insideBorder(Vector3 pos) {
-		return(
-			pos.x >= -2 && pos.x <= 2 &&
-			pos.z >= -2 && pos.z <= 2 &&
-			pos.y >= 0);
 	}
 
 	void Rotate(Vector3 pos) {
@@ -153,6 +164,13 @@ public class PlayerController : MonoBehaviour {
 		activeScript.SetHighlight();
 		activeScript.SetActiveColor(activeColor);
 	}
+	
+	bool insideBorder(Vector3 pos) {
+		return(
+			pos.x >= -2 && pos.x <= 2 &&
+			pos.z >= -2 && pos.z <= 2 &&
+			pos.y >= 0);
+	}
 
 	bool ValidPositions(Transform[] positions) {
 		for(int i = 0; i < positions.Length; i++) {
@@ -160,7 +178,8 @@ public class PlayerController : MonoBehaviour {
 				return false;
 			}
 
-			// TODO: Check if there is not a cube in the way.
+			// Check if there is not a cube in the way.
+			CheckDestination(positions[i].position);
 		}
 		return true;
 	}
@@ -171,9 +190,26 @@ public class PlayerController : MonoBehaviour {
 				return false;
 			}
 
-			// TODO: Check if there is not a cube in the way.
+			// Check if there is not a cube in the way.
+			if(!CheckDestination(positions[i])) {
+				return false;
+			}
 		}
 		return true;
+	}
+
+	bool CheckDestination(Vector3 target) {
+		// Check to ensure no cubes are in the destination position.
+		GameObject[] objects = GameObject.FindGameObjectsWithTag("Tetromino");
+		for(int i = 0; i < objects.Length; i++) {
+			if(objects[i].GetComponent<Renderer>().material.color != activeColor){
+				if(objects[i].transform.position == target) {
+					return false;
+				}
+			}
+		}
+		return true;
+		
 	}
 
 	void SpawnTetromino() {
@@ -195,6 +231,12 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void CheckScore() {
-		;
+		for(int y = 0; y < 11; y++) {
+			for(int x = -2; x < 3; x++) {
+				for(int z = -2; z < 3; z++) {
+					
+				}
+			}
+		}
 	}
 }
