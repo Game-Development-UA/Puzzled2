@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class PlayerController : MonoBehaviour {
 	// Store color for active tetromino.
@@ -18,6 +19,9 @@ public class PlayerController : MonoBehaviour {
 
 	int score = 0;
 
+	public GameObject pause;
+	public TextMeshProUGUI scoreText;
+
 	RaycastHit hit;
 	GameObject activePiece;
 	GameObject currentSelection;
@@ -29,6 +33,8 @@ public class PlayerController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		scoreText.text = "" + score;
+
 		// Ensure random piece by setting different seed each time.
 		Random.seed = (int)System.DateTime.Now.Ticks;
 
@@ -238,8 +244,12 @@ public class PlayerController : MonoBehaviour {
 	void CheckScore() {
 		// Check first 10 plus 11th for gameover
 		for(int y = 0; y < 12; y++) {
-			if(CheckPlane(y)) {
+			if (y == 11 && CheckPlane(y)) {
+				GameOver();
+			}
+			else if(CheckPlane(y)) {
 				score += 25;
+				scoreText.text = "" + score;
 				y--;
 			}
 		}
@@ -251,6 +261,10 @@ public class PlayerController : MonoBehaviour {
 			for(int z = -2; z < 3; z++) {
 				if(!CheckDestination(new Vector3(x, y, z))) {
 					cubesInPlane++;
+					// Problem if block in the 11th.
+					if(y == 11) {
+						return true;
+					}
 				}
 			}
 		}
@@ -286,5 +300,11 @@ public class PlayerController : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	void GameOver() {
+		pause.GetComponent<LevelPauseMenu>().GameOver();
+		pause.SetActive(false);
+		gameObject.SetActive(false);
 	}
 }
