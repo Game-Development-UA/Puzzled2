@@ -36,6 +36,6 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void CheckScore() {
-		
+		;
 	}
 }
