@@ -7,11 +7,14 @@ public class PlayerController : MonoBehaviour {
 	public Color activeColor;
 	// Store color for the projected landing location.
 	public Color highlightColor;
+	// Default color same as the tiles.
+	public Color defaultColor;
 	// Store Prefabs for spawning random shapes.
 	public GameObject[] tetrominos;
 	// Store location for the new tetrominos
 	public Vector3 spawnLocation;
 	public float longPressDelay = 0.2f;
+	public float swipeTime = 0.4f;
 
 	RaycastHit hit;
 	GameObject activePiece;
@@ -30,6 +33,7 @@ public class PlayerController : MonoBehaviour {
 		// Set alpha values for the color
 		activeColor.a = 1f;
 		highlightColor.a = 1f;
+		defaultColor.a = 1f;
 
 		// Instantiate the first piece
 		SpawnTetromino();
@@ -39,25 +43,8 @@ public class PlayerController : MonoBehaviour {
 	void Update () {
 		activeScript.SetHighlight();
 
-		// If mouse clicked.
-		if ( Input.GetButtonDown("Fire1") ) {
-			startTime = Time.time;
-
-			// Cast ray from the camera to mouse poisiton.
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-			// Check the collision.
-			if ( Physics.Raycast(ray, out hit, 100.0f) ) {
-				Debug.Log("Hit!");
-				Debug.Log("   Details: " + hit.collider.gameObject.name);
-				currentSelection = hit.collider.gameObject;
-
-				// Check RotateUI was clicked
-			}
-			// Store time to differentiate long clicks.
-		}
 		// If left click longer than longPressDelay.
-		else if ( Input.GetButton("Fire1") && Time.time - startTime > longPressDelay ) {
+		if ( Input.GetButton("Fire1") && Time.time - startTime > longPressDelay  && Time.time - startTime < swipeTime) {
 			// Keep original selection position
 			Vector3 ogClickPosition = currentSelection.transform.position;
 			// Get renderer to check for highlight
@@ -78,13 +65,14 @@ public class PlayerController : MonoBehaviour {
 					// Check cube location
 					for( int i = 0; i < 4; i++ ) {
 						Vector3 currentPosition = activeScript.cubes[i].position;
-						currentPosition += offset;
-						if(isValidPosition(currentPosition)) {
+						currentPosition = roundVector3(currentPosition + offset);
+						if(insideBorder(currentPosition)) {
 							newPositions[i] = currentPosition;
 						} else {
 							return;
 						}
 					}
+					ogClickPosition = roundVector3(ogClickPosition + offset);
 
 					// If all 4 were valid positions, move to it.
 					activeScript.MoveToNewPosition(newPositions);
@@ -92,21 +80,47 @@ public class PlayerController : MonoBehaviour {
 				
 			}
 		}
+		// If mouse clicked.
+		else if ( Input.GetButtonDown("Fire1") ) {
+			startTime = Time.time;
+
+			// Cast ray from the camera to mouse poisiton.
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+			// Check the collision.
+			if ( Physics.Raycast(ray, out hit, 100.0f) ) {
+				currentSelection = hit.collider.gameObject;
+
+				// RotationUI Logic
+				if(currentSelection.GetComponent<Renderer>().material.name == "Default_Prototype (Instance)") {
+					startTime += swipeTime;
+					// Rotate X
+					if (Vector3.right == hit.normal) {
+						Debug.Log("Rotate X");
+						activeScript.Rotate(Vector3.right);
+					}
+					// Rotate Y
+					else if (Vector3.up == hit.normal) {
+						Debug.Log("Rotate Y");
+						activeScript.Rotate(Vector3.up);
+					}
+					// Rotate Z
+					else if (Vector3.back == hit.normal) {
+						Debug.Log("Rotate Z");
+						activeScript.Rotate(Vector3.back);
+					}
+
+				}
+			}
+			// Store time to differentiate long clicks.
+		}
 	}
 
-	bool isValidPosition(Vector3 input) {
-		GameObject[] pieces = GameObject.FindGameObjectsWithTag("Tetromino");
-		for( int i = 0; i < pieces.Length; i++) {
-			Vector3 position = pieces[i].transform.position;
-			if (
-				position == input ||
-				position.x > 2.0f || position.z > 2.0f ||
-				position.x < -2.0f || position.z < -2.0f
-				) {
-				return false;
-			}
-		}
-		return true;
+	bool insideBorder(Vector3 pos) {
+		return(
+			pos.x >= -2 && pos.x <= 2 &&
+			pos.z >= -2 && pos.z <= 2 &&
+			pos.y >= 0);
 	}
 
 	Vector3 roundVector3(Vector3 input) {
@@ -131,6 +145,8 @@ public class PlayerController : MonoBehaviour {
 		activeScript.SetActiveColor(activeColor);
 		// Set highlight color for projected destination.
 		activeScript.SetHighlightColor(highlightColor);
+		// Set default color of shapes
+		activeScript.SetDefaultColor(defaultColor);
 	}
 
 	void CheckScore() {

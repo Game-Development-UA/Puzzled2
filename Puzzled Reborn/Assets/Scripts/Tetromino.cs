@@ -8,7 +8,7 @@ public class Tetromino : MonoBehaviour {
 	public float reach = 100f;
 
 	Color[] originalColors = new Color[4];
-	Color highlightColor, activeColor;
+	Color highlightColor, activeColor, defaultColor;
 	RaycastHit hit;
 
 
@@ -16,10 +16,31 @@ public class Tetromino : MonoBehaviour {
 		highlightColor = color;
 	}
 
+	public void SetDefaultColor(Color color) {
+		defaultColor = color;
+	}
+
 	public void SetActiveColor(Color color) {
 		activeColor = color;
 		for(int i=0; i < 4; i++) { 
 			cubes[i].gameObject.GetComponent<Renderer>().material.color = color;
+		}
+	}
+
+	public void SetDefault() {
+		for (int i=0; i < 4; i++) {
+			// Get position of current cubes bottom face.
+			Vector3 pos = new Vector3(
+				cubes[i].position.x,
+				cubes[i].position.y - 0.5f,
+				cubes[i].position.z
+				);
+
+			// Change material to the default color.
+			if(Physics.Raycast(pos, Vector3.down, out hit, reach)) {
+				GameObject target = hit.collider.gameObject;
+				target.GetComponent<Renderer>().material.color = defaultColor;
+			}
 		}
 	}
 
@@ -37,7 +58,7 @@ public class Tetromino : MonoBehaviour {
 				GameObject target = hit.collider.gameObject;
 				Renderer renderer = target.GetComponent<Renderer>();
 				if (renderer.material.color != activeColor) {
-					originalColors[i] =  renderer.material.color;
+					originalColors[i] = renderer.material.color;
 					renderer.material.color = highlightColor;
 				}
 			}
@@ -46,23 +67,25 @@ public class Tetromino : MonoBehaviour {
 
 	public void MoveToNewPosition(Vector3[] newPositions) {
 		// Get highlight location from the SetHighlight function.
+		SetDefaultColor(defaultColor);
 		for(int i=0; i < 4; i++) {
-			// Get position of current cubes bottom face.
-			Vector3 pos = new Vector3(
-				cubes[i].position.x,
-				cubes[i].position.y - 0.5f,
-				cubes[i].position.z
-				);
-
-			// Change material to it's original color.
-			if(Physics.Raycast(pos, Vector3.down, out hit, reach)) {
-				GameObject target = hit.collider.gameObject;
-				target.GetComponent<Renderer>().material.color = originalColors[i];
-			}
-
 			// Move shape to a new position
 			cubes[i].position = newPositions[i];
 		}
+
+		SetHighlight();
+	}
+
+	public void Rotate(Vector3 pos) {
+		SetDefault();
+
+		Vector3 pivot = cubes[0].position;
+		for (int i = 0; i < 4; i++) {
+			cubes[i].RotateAround(pivot, pos, 90);
+		}
+
+		SetHighlight();
+		SetActiveColor(activeColor);
 	}
 
 }
